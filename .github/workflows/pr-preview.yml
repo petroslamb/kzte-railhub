@@ -78,8 +78,11 @@ jobs:
           elif [ -d "${APP_DIR}/build" ]; then
             rsync -a --delete "${APP_DIR}/build/" "${PREVIEW_ROOT}/"
           else
-            cat <<'HTML' > "${PREVIEW_ROOT}/index.html"
-<!DOCTYPE html>
+            python3 - <<'PY'
+from pathlib import Path
+import os
+pr_number = os.environ.get("PR_NUMBER", "N/A")
+content = f"""<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -93,12 +96,16 @@ jobs:
     </style>
   </head>
   <body>
-    <h1>Preview placeholder for PR #${PR_NUMBER}</h1>
+    <h1>Preview placeholder for PR #{pr_number}</h1>
     <p>No build artefacts were produced for this pull request. If you expected a frontend preview, ensure the pull request includes a Next.js export (contents of <code>out/</code>) or another static bundle.</p>
     <p>Repository root files are still available via GitHub's file browser.</p>
   </body>
 </html>
-HTML
+"""
+preview_root = Path(os.environ["PREVIEW_ROOT"])
+preview_root.mkdir(parents=True, exist_ok=True)
+(preview_root / "index.html").write_text(content.strip() + "\n", encoding="utf-8")
+PY
           fi
           touch "${PREVIEW_ROOT}/.nojekyll"
 
