@@ -79,26 +79,26 @@ jobs:
             rsync -a --delete "${APP_DIR}/build/" "${PREVIEW_ROOT}/"
           else
             cat <<'HTML' > "${PREVIEW_ROOT}/index.html"
-            <!DOCTYPE html>
-            <html lang="en">
-              <head>
-                <meta charset="utf-8" />
-                <title>KZTE RailHub Preview</title>
-                <meta name="viewport" content="width=device-width,initial-scale=1" />
-                <style>
-                  body { font-family: system-ui, sans-serif; margin: 2.5rem auto; max-width: 60ch; line-height: 1.6; padding: 0 1.5rem; }
-                  h1 { font-size: 2rem; margin-bottom: 1rem; }
-                  code { background: #f4f4f4; padding: 0.15rem 0.35rem; border-radius: 0.25rem; }
-                  a { color: #2563eb; }
-                </style>
-              </head>
-              <body>
-                <h1>Preview placeholder for PR #${PR_NUMBER}</h1>
-                <p>No build artefacts were produced for this pull request. If you expected a frontend preview, ensure the pull request includes a Next.js export (contents of <code>out/</code>) or another static bundle.</p>
-                <p>Repository root files are still available via GitHub's file browser.</p>
-              </body>
-            </html>
-            HTML
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>KZTE RailHub Preview</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 2.5rem auto; max-width: 60ch; line-height: 1.6; padding: 0 1.5rem; }
+      h1 { font-size: 2rem; margin-bottom: 1rem; }
+      code { background: #f4f4f4; padding: 0.15rem 0.35rem; border-radius: 0.25rem; }
+      a { color: #2563eb; }
+    </style>
+  </head>
+  <body>
+    <h1>Preview placeholder for PR #${PR_NUMBER}</h1>
+    <p>No build artefacts were produced for this pull request. If you expected a frontend preview, ensure the pull request includes a Next.js export (contents of <code>out/</code>) or another static bundle.</p>
+    <p>Repository root files are still available via GitHub's file browser.</p>
+  </body>
+</html>
+HTML
           fi
           touch "${PREVIEW_ROOT}/.nojekyll"
 
