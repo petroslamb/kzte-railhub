@@ -1,6 +1,11 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import styles from "./escrow-simulator.module.css";
@@ -31,6 +36,11 @@ export function EscrowSimulator() {
   const [createTx, setCreateTx] = useState<string | null>(null);
   const [releaseTx, setReleaseTx] = useState<string | null>(null);
   const [complianceHold, setComplianceHold] = useState(false);
+  const hydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   const statusVariant = useMemo(() => {
     if (status === "idle") return "warning";
@@ -74,7 +84,11 @@ export function EscrowSimulator() {
             {statusCopy[status]}
           </span>
         </div>
-        <WalletMultiButton />
+        {hydrated ? (
+          <WalletMultiButton />
+        ) : (
+          <div className={styles.walletButtonShim} aria-hidden />
+        )}
       </div>
 
       <div className={styles.actions}>
