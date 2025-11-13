@@ -22,6 +22,14 @@ const timelineSteps = [
   "Release escrow to UAE operator",
 ];
 
+const statusThresholds: Record<EscrowStatus, number> = {
+  idle: 0,
+  creating: 1,
+  ready: 2,
+  releasing: 3,
+  settled: 4,
+};
+
 const explorerUrl = (tx: string) =>
   `https://explorer.solana.com/tx/${tx}?cluster=devnet`;
 
@@ -36,6 +44,10 @@ export function EscrowSimulator() {
     if (status === "idle") return "warning";
     if (status === "creating" || status === "releasing") return "pending";
     return "success";
+  }, [status]);
+
+  const progress = useMemo(() => {
+    return Math.min(1, statusThresholds[status] / timelineSteps.length);
   }, [status]);
 
   const simulateTx = () =>
@@ -67,6 +79,13 @@ export function EscrowSimulator() {
 
   return (
     <section className={styles.panel}>
+      <header className={styles.panelHeader}>
+        <div>
+          <p className={styles.hint}>RailHub console</p>
+          <h2 className={styles.panelTitle}>Escrow simulator</h2>
+        </div>
+        <span className={styles.badge}>Live on Devnet</span>
+      </header>
       <div className={styles.walletRow}>
         <div>
           <p className={styles.hint}>Wallet status</p>
@@ -75,6 +94,12 @@ export function EscrowSimulator() {
           </span>
         </div>
         <WalletMultiButton />
+      </div>
+      <div className={styles.progressTrack} aria-hidden="true">
+        <span
+          className={styles.progressIndicator}
+          style={{ width: `${progress * 100}%` }}
+        />
       </div>
 
       <div className={styles.actions}>
@@ -96,14 +121,7 @@ export function EscrowSimulator() {
 
       <div className={styles.timeline}>
         {timelineSteps.map((step, index) => {
-          const thresholds: Record<EscrowStatus, number> = {
-            idle: 0,
-            creating: 1,
-            ready: 2,
-            releasing: 3,
-            settled: 4,
-          };
-          const active = thresholds[status] > index;
+          const active = statusThresholds[status] > index;
           return (
             <div key={step} className={styles.timelineItem}>
               <span
