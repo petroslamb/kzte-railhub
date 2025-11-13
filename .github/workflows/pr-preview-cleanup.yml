@@ -79,14 +79,15 @@ jobs:
           cache: npm
           cache-dependency-path: railhub-demo/package-lock.json
 
-      - name: Install dependencies (npm ci)
-        if: ${{ steps.prepare.outputs.skip != 'true' && hashFiles('railhub-demo/package.json') != '' && hashFiles('railhub-demo/package-lock.json') != '' }}
-        run: npm ci
-        working-directory: ${{ env.APP_DIR }}
-
-      - name: Install dependencies (npm install fallback)
-        if: ${{ steps.prepare.outputs.skip != 'true' && hashFiles('railhub-demo/package.json') != '' && hashFiles('railhub-demo/package-lock.json') == '' }}
-        run: npm install
+      - name: Install dependencies (ci with npm install fallback)
+        if: ${{ steps.prepare.outputs.skip != 'true' && hashFiles('railhub-demo/package.json') != '' }}
+        run: |
+          set -euo pipefail
+          if npm ci; then
+            exit 0
+          fi
+          echo "npm ci failed; falling back to npm install to refresh lockfile" >&2
+          npm install
         working-directory: ${{ env.APP_DIR }}
 
       - name: Build main branch site
