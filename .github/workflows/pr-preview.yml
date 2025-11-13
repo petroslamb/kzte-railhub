@@ -108,11 +108,11 @@ HTML
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ${{ env.PREVIEW_ROOT }}
           publish_branch: gh-pages
-          destination_dir: pr-${{ github.event.number }}
+          destination_dir: pr-${{ env.PR_NUMBER }}
           keep_files: true
           user_name: github-actions[bot]
           user_email: 41898282+github-actions[bot]@users.noreply.github.com
-          commit_message: "docs: deploy preview for PR #${{ github.event.number }}"
+          commit_message: "docs: deploy preview for PR #${{ env.PR_NUMBER }}"
 
       - name: Share preview URL
         uses: actions/github-script@v7
