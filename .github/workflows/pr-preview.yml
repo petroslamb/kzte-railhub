@@ -79,33 +79,33 @@ jobs:
             rsync -a --delete "${APP_DIR}/build/" "${PREVIEW_ROOT}/"
           else
             python3 - <<'PY'
-from pathlib import Path
-import os
-pr_number = os.environ.get("PR_NUMBER", "N/A")
-content = f"""<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>KZTE RailHub Preview</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <style>
-      body { font-family: system-ui, sans-serif; margin: 2.5rem auto; max-width: 60ch; line-height: 1.6; padding: 0 1.5rem; }
-      h1 { font-size: 2rem; margin-bottom: 1rem; }
-      code { background: #f4f4f4; padding: 0.15rem 0.35rem; border-radius: 0.25rem; }
-      a { color: #2563eb; }
-    </style>
-  </head>
-  <body>
-    <h1>Preview placeholder for PR #{pr_number}</h1>
-    <p>No build artefacts were produced for this pull request. If you expected a frontend preview, ensure the pull request includes a Next.js export (contents of <code>out/</code>) or another static bundle.</p>
-    <p>Repository root files are still available via GitHub's file browser.</p>
-  </body>
-</html>
-"""
-preview_root = Path(os.environ["PREVIEW_ROOT"])
-preview_root.mkdir(parents=True, exist_ok=True)
-(preview_root / "index.html").write_text(content.strip() + "\n", encoding="utf-8")
-PY
+            from pathlib import Path
+            import os
+            pr_number = os.environ.get("PR_NUMBER", "N/A")
+            content = f"""<!DOCTYPE html>
+            <html lang="en">
+              <head>
+                <meta charset="utf-8" />
+                <title>KZTE RailHub Preview</title>
+                <meta name="viewport" content="width=device-width,initial-scale=1" />
+                <style>
+                  body { font-family: system-ui, sans-serif; margin: 2.5rem auto; max-width: 60ch; line-height: 1.6; padding: 0 1.5rem; }
+                  h1 { font-size: 2rem; margin-bottom: 1rem; }
+                  code { background: #f4f4f4; padding: 0.15rem 0.35rem; border-radius: 0.25rem; }
+                  a { color: #2563eb; }
+                </style>
+              </head>
+              <body>
+                <h1>Preview placeholder for PR #{pr_number}</h1>
+                <p>No build artefacts were produced for this pull request. If you expected a frontend preview, ensure the pull request includes a Next.js export (contents of <code>out/</code>) or another static bundle.</p>
+                <p>Repository root files are still available via GitHub's file browser.</p>
+              </body>
+            </html>
+            """
+            preview_root = Path(os.environ["PREVIEW_ROOT"])
+            preview_root.mkdir(parents=True, exist_ok=True)
+            (preview_root / "index.html").write_text(content.strip() + "\n", encoding="utf-8")
+            PY
           fi
           touch "${PREVIEW_ROOT}/.nojekyll"
 
