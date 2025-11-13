@@ -1,0 +1,129 @@
+name: PR Preview
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-preview:
+    name: Build and publish preview
+    runs-on: ubuntu-latest
+    env:
+      PREVIEW_ROOT: preview
+      PR_NUMBER: ${{ github.event.number }}
+    steps:
+      - name: Check out PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        if: ${{ hashFiles('package.json') != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies (npm ci)
+        if: ${{ hashFiles('package.json') != '' && hashFiles('package-lock.json') != '' }}
+        run: npm ci
+
+      - name: Install dependencies (npm install fallback)
+        if: ${{ hashFiles('package.json') != '' && hashFiles('package-lock.json') == '' }}
+        run: npm install
+
+      - name: Build project
+        if: ${{ hashFiles('package.json') != '' }}
+        run: |
+          npm run build --if-present
+          npm run export --if-present
+
+      - name: Prepare preview bundle
+        run: |
+          set -euo pipefail
+          mkdir -p "${PREVIEW_ROOT}"
+          if [ -d out ]; then
+            rsync -a --delete out/ "${PREVIEW_ROOT}/"
+          elif [ -d dist ]; then
+            rsync -a --delete dist/ "${PREVIEW_ROOT}/"
+          elif [ -d build ]; then
+            rsync -a --delete build/ "${PREVIEW_ROOT}/"
+          else
+            cat <<'HTML' > "${PREVIEW_ROOT}/index.html"
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>KZTE RailHub Preview</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 2.5rem auto; max-width: 60ch; line-height: 1.6; padding: 0 1.5rem; }
+      h1 { font-size: 2rem; margin-bottom: 1rem; }
+      code { background: #f4f4f4; padding: 0.15rem 0.35rem; border-radius: 0.25rem; }
+      a { color: #2563eb; }
+    </style>
+  </head>
+  <body>
+    <h1>Preview placeholder for PR #${PR_NUMBER}</h1>
+    <p>No build artefacts were produced for this pull request. If you expected a frontend preview, ensure the pull request includes a Next.js export (contents of <code>out/</code>) or another static bundle.</p>
+    <p>Repository root files are still available via GitHub's file browser.</p>
+  </body>
+</html>
+HTML
+          fi
+          touch "${PREVIEW_ROOT}/.nojekyll"
+
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ env.PREVIEW_ROOT }}
+          publish_branch: gh-pages
+          destination_dir: pr-${{ github.event.number }}
+          keep_files: true
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          commit_message: "docs: deploy preview for PR #${{ github.event.number }}"
+
+      - name: Share preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- pr-preview -->';
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            const previewUrl = `https://${owner}.github.io/${repo}/pr-${prNumber}/`;
+            const body = `${marker}\n🚀 Preview deployment for PR #${prNumber}: ${previewUrl}`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: prNumber,
+              per_page: 100
+            });
+
+            const existing = comments.find(comment => comment.body && comment.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: prNumber,
+                body
+              });
+            }
