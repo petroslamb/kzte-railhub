@@ -16,6 +16,10 @@ jobs:
     env:
       PR_NUMBER: ${{ github.event.number }}
       PREVIEW_DIR: pr-${{ github.event.number }}
+      APP_DIR: railhub-demo
+      SITE_ROOT: site
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      NEXT_BASE_PATH_MAIN: /${{ github.event.repository.name }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -59,6 +63,70 @@ jobs:
             git push origin gh-pages
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Check out default branch source
+        if: ${{ steps.prepare.outputs.skip != 'true' }}
+        run: |
+          set -euo pipefail
+          git checkout "${DEFAULT_BRANCH}"
+          git pull --ff-only origin "${DEFAULT_BRANCH}"
+
+      - name: Set up Node.js for main deploy
+        if: ${{ steps.prepare.outputs.skip != 'true' && hashFiles('railhub-demo/package.json') != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: railhub-demo/package-lock.json
+
+      - name: Install dependencies (ci with npm install fallback)
+        if: ${{ steps.prepare.outputs.skip != 'true' && hashFiles('railhub-demo/package.json') != '' }}
+        run: |
+          set -euo pipefail
+          if npm ci; then
+            exit 0
+          fi
+          echo "npm ci failed; falling back to npm install to refresh lockfile" >&2
+          npm install
+        working-directory: ${{ env.APP_DIR }}
+
+      - name: Build main branch site
+        if: ${{ steps.prepare.outputs.skip != 'true' && hashFiles('railhub-demo/package.json') != '' }}
+        run: |
+          npm run build --if-present
+          npm run export --if-present
+        working-directory: ${{ env.APP_DIR }}
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ env.NEXT_BASE_PATH_MAIN }}
+
+      - name: Prepare main site bundle
+        if: ${{ steps.prepare.outputs.skip != 'true' }}
+        run: |
+          set -euo pipefail
+          rm -rf "${SITE_ROOT}"
+          mkdir -p "${SITE_ROOT}"
+          if [ -d "${APP_DIR}/out" ]; then
+            rsync -a --delete "${APP_DIR}/out/" "${SITE_ROOT}/"
+          elif [ -d "${APP_DIR}/dist" ]; then
+            rsync -a --delete "${APP_DIR}/dist/" "${SITE_ROOT}/"
+          elif [ -d "${APP_DIR}/build" ]; then
+            rsync -a --delete "${APP_DIR}/build/" "${SITE_ROOT}/"
+          else
+            python3 - "$SITE_ROOT" -c $'from pathlib import Path\nimport sys\nfrom textwrap import dedent\nsite_root = Path(sys.argv[1])\nsite_root.mkdir(parents=True, exist_ok=True)\nhtml = dedent("""<!DOCTYPE html>\n<html lang=\\"en\\">\n  <head>\n    <meta charset=\\"utf-8\\" />\n    <title>KZTE RailHub Main</title>\n    <meta name=\\"viewport\\" content=\\"width=device-width,initial-scale=1\\" />\n    <style>\n      body { font-family: system-ui, sans-serif; margin: 2.5rem auto; max-width: 60ch; line-height: 1.6; padding: 0 1.5rem; }\n      h1 { font-size: 2rem; margin-bottom: 1rem; }\n      code { background: #f4f4f4; padding: 0.15rem 0.35rem; border-radius: 0.25rem; }\n      a { color: #2563eb; }\n    </style>\n  </head>\n  <body>\n    <h1>Main branch deployment placeholder</h1>\n    <p>No build artefacts were produced while updating the main site. If you expected a frontend bundle, ensure <code>npm run build</code> emits static files (e.g. <code>out/</code>).</p>\n  </body>\n</html>\n""")\nsite_root.joinpath("index.html").write_text(html, encoding="utf-8")\n'
+          fi
+          touch "${SITE_ROOT}/.nojekyll"
+
+      - name: Publish main site to GitHub Pages root
+        if: ${{ steps.prepare.outputs.skip != 'true' }}
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ env.SITE_ROOT }}
+          publish_branch: gh-pages
+          keep_files: true
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          commit_message: "docs: sync main site after PR #${{ env.PR_NUMBER }} closure"
 
       - name: Update preview comment
         if: ${{ steps.prepare.outputs.skip != 'true' }}
