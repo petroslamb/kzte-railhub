@@ -1,7 +1,0 @@
-1:"$Sreact.fragment"
-2:I[97367,["/kzte-railhub/pr-11/_next/static/chunks/350dfc559c210ca7.js","/kzte-railhub/pr-11/_next/static/chunks/42879de7b8087bc9.js","/kzte-railhub/pr-11/_next/static/chunks/04d67a136ed102b2.js","/kzte-railhub/pr-11/_next/static/chunks/d9543b5e1dab1edf.js"],"ViewportBoundary"]
-4:I[97367,["/kzte-railhub/pr-11/_next/static/chunks/350dfc559c210ca7.js","/kzte-railhub/pr-11/_next/static/chunks/42879de7b8087bc9.js","/kzte-railhub/pr-11/_next/static/chunks/04d67a136ed102b2.js","/kzte-railhub/pr-11/_next/static/chunks/d9543b5e1dab1edf.js"],"MetadataBoundary"]
-5:"$Sreact.suspense"
-0:{"buildId":"KM-1RAvo1QgYIExNV8CWV","rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":"$@3"}],["$","div",null,{"hidden":true,"children":["$","$L4",null,{"children":["$","$5",null,{"name":"Next.Metadata","children":"$@6"}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"loading":null,"isPartial":false}
-3:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
-6:[["$","title","0",{"children":"RailHub Demo"}],["$","meta","1",{"name":"description","content":"Prototype Next.js application for the RailHub proof of concept."}]]
